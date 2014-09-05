@@ -63,6 +63,11 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
     //If voice privacy is on this property will be added to the call associated with the connection.
     private static final int CAPABILITY_VOICE_PRIVACY = 0x00400000;
 
+    private static final String ACTION_ONGOING_CALL =
+            "com.android.systemui.ACTION_ONGOING_CALL";
+
+    private static final String EXTRA_ONGOING_CALL_SHOW = "show";
+
     private final Context mContext;
     private final ContactInfoCache mContactInfoCache;
     private final NotificationManager mNotificationManager;
@@ -132,6 +137,7 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
             Log.d(this, "cancelInCall()...");
             mNotificationManager.cancel(mCurrentNotification);
         }
+        moveToBackgroundNotification(mContext, false);
         mCurrentNotification = NOTIFICATION_NONE;
     }
 
@@ -143,6 +149,7 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
         Log.i(StatusBarNotifier.class.getSimpleName(),
                 "Something terrible happened. Clear all InCall notifications");
 
+        moveToBackgroundNotification(backupContext, false);
         NotificationManager notificationManager =
                 (NotificationManager) backupContext.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(NOTIFICATION_IN_CALL);
@@ -160,7 +167,7 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
 
         final Call call = getCallToShow(callList);
 
-        if (call != null) {
+        if (call != null && !InCallPresenter.getInstance().isShowingInCallUi()) {
             showNotification(call);
         } else {
             cancelNotification();
@@ -272,6 +279,14 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
             if (subInfoRecord != null) {
                 builder.setSubText(subInfoRecord.getDisplayName());
             }
+        }
+
+        if (state == Call.State.ONHOLD) {
+            moveToBackgroundNotification(mContext, true);
+        } else if (state == Call.State.ACTIVE) {
+            moveToBackgroundNotification(mContext, true);
+        } else if (state == Call.State.DIALING) {
+            moveToBackgroundNotification(mContext, true);
         }
 
         if (isVideoUpgradeRequest) {
@@ -656,6 +671,7 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
         if (isCallWaiting) {
             Log.i(this, "configureFullScreenIntent: call-waiting or dsda incoming call!"
                     + " force relaunch. Active sub:" + callList.getActiveSubId());
+            moveToBackgroundNotification(mContext, false);
             // Cancel the IN_CALL_NOTIFICATION immediately before
             // (re)posting it; this seems to force the
             // NotificationManager to launch the fullScreenIntent.
@@ -728,5 +744,18 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
     @Override
     public void onChildNumberChange() {
         // no-op
+    }
+
+   /**
+     * Send broadcast Intent "com.android.systemui.ACTION_ONGOING_CALL"
+     * for showing the green animation of statusbar.
+     *
+     * @param context The context.
+     * @param show The flag whether to show.
+     */
+    private static void moveToBackgroundNotification(Context context, boolean show) {
+        Intent intent = new Intent(ACTION_ONGOING_CALL);
+        intent.putExtra(EXTRA_ONGOING_CALL_SHOW, show);
+        context.sendBroadcast(intent);
     }
 }
