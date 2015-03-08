@@ -242,14 +242,6 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
             largeIcon = getRoundedIcon(largeIcon);
         }
 
-        // set the content
-        if (TelephonyManager.getDefault().isMultiSimEnabled()) {
-            SubscriptionInfo info =
-                    SubscriptionManager.from(mContext).getActiveSubscriptionInfo(call.getSubId());
-            if (info != null) {
-                content += " (" + info.getDisplayName() + ")";
-            }
-        }
         /*
          * Nothing more to check...build and send it.
          */
@@ -273,6 +265,14 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
         builder.setContentTitle(contentTitle);
         builder.setLargeIcon(largeIcon);
         builder.setColor(mContext.getResources().getColor(R.color.dialer_theme_color));
+
+        if (TelephonyManager.getDefault().isMultiSimEnabled()) {
+            SubscriptionManager mgr = SubscriptionManager.from(mContext);
+            SubscriptionInfo subInfoRecord = mgr.getActiveSubscriptionInfo(call.getSubId());
+            if (subInfoRecord != null) {
+                builder.setSubText(subInfoRecord.getDisplayName());
+            }
+        }
 
         if (isVideoUpgradeRequest) {
             builder.setUsesChronometer(false);
