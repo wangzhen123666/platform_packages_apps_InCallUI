@@ -215,7 +215,6 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
 
         final boolean primaryChanged = !(Call.areSame(mPrimary, primary) &&
                 Call.areSameNumber(mPrimary, primary));
-        final boolean primaryForwardedChanged = isForwarded(mPrimary) != isForwarded(primary);
         final boolean secondaryChanged = !(Call.areSame(mSecondary, secondary) &&
                 Call.areSameNumber(mSecondary, secondary));
         final boolean shouldShowCallSubject = shouldShowCallSubject(mPrimary);
@@ -248,8 +247,6 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
             updatePrimaryDisplayInfo();
             maybeStartSearch(mPrimary, true);
             mPrimary.setSessionModificationState(Call.SessionModificationState.NO_REQUEST);
-        } else if (primaryForwardedChanged && mPrimary != null) {
-            updatePrimaryDisplayInfo();
         }
 
         if (previousPrimary != null && mPrimary == null) {
@@ -300,8 +297,7 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
                     null,
                     null,
                     false /* isWifi */,
-                    false /* isConference */,
-                    false /* isWaitingForRemoteSide */);
+                    false /* isConference */);
             getUi().showHdAudioIndicator(false);
         }
 
@@ -402,8 +398,7 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
                     getCallStateIcon(),
                     getGatewayNumber(),
                     mPrimary.hasProperty(Details.PROPERTY_WIFI),
-                    mPrimary.isConferenceCall(),
-                    mPrimary.isWaitingForRemoteSide());
+                    mPrimary.isConferenceCall());
 
             maybeShowHdAudioIcon();
             setCallbackNumber();
@@ -573,10 +568,6 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
         }
     }
 
-    private static boolean isForwarded(Call call) {
-        return call != null && call.isForwarded();
-    }
-
     private void updateContactEntry(ContactCacheEntry entry, boolean isPrimary) {
         if (isPrimary) {
             mPrimaryContactInfo = entry;
@@ -639,7 +630,7 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
 
         if (mPrimary == null) {
             // Clear the primary display info.
-            ui.setPrimary(null, null, false, null, null, false, false, false);
+            ui.setPrimary(null, null, false, null, null, false, false);
             return;
         }
 
@@ -658,7 +649,6 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
                     null /* label */,
                     getConferencePhoto(mPrimary),
                     false /* isSipCall */,
-                    false /* isForwarded */,
                     showContactPhoto);
         } else if (mPrimaryContactInfo != null) {
             Log.d(TAG, "Update primary display info for " + mPrimaryContactInfo);
@@ -691,7 +681,6 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
             maybeShowHdAudioIcon();
 
             boolean nameIsNumber = name != null && name.equals(mPrimaryContactInfo.number);
-            final boolean isForwarded = isForwarded(mPrimary);
             ui.setPrimary(
                     number,
                     name,
@@ -699,11 +688,10 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
                     isChildNumberShown || isCallSubjectShown ? null : mPrimaryContactInfo.label,
                     mPrimaryContactInfo.photo,
                     mPrimaryContactInfo.isSipCall,
-                    isForwarded,
                     showContactPhoto);
         } else {
             // Clear the primary display info.
-            ui.setPrimary(null, null, false, null, null, false, false, false);
+            ui.setPrimary(null, null, false, null, null, false, false);
         }
 
         if (mEmergencyCallListener != null) {
@@ -1004,7 +992,7 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
         void setVisible(boolean on);
         void setCallCardVisible(boolean visible);
         void setPrimary(String number, String name, boolean nameIsNumber, String label,
-                Drawable photo, boolean isSipCall, boolean isForwarded, boolean isContactPhotoShown);
+                Drawable photo, boolean isSipCall, boolean isContactPhotoShown);
         void setSecondary(boolean show, String name, boolean nameIsNumber, String label,
                 String providerLabel, boolean isConference, boolean isVideoCall,
                 boolean isFullscreen);
@@ -1012,7 +1000,7 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
         void setCallState(int state, int videoState, int sessionModificationState,
                 DisconnectCause disconnectCause, String connectionLabel,
                 Drawable connectionIcon, String gatewayNumber, boolean isWifi,
-                boolean isConference, boolean isWaitingForRemoteSide);
+                boolean isConference);
         void setPrimaryCallElapsedTime(boolean show, long duration);
         void setPrimaryName(String name, boolean nameIsNumber);
         void setPrimaryImage(Drawable image, boolean isVisible);
